@@ -1,0 +1,13 @@
+www.instagram.com	FALSE	/	FALSE	2109300306	mid	WCFYUQAEAAE1SIp3SF8xNeo9yXYN
+badges.instagram.com	FALSE	/	FALSE	2109489678	mid	WCQ8DQAEAAEaoBx-ZlJN6OVvzYR4
+badges.instagram.com	FALSE	/	TRUE	1510222405	csrftoken	xyocPkK7zheCvUQU1DVNlCguRKiei79B
+api.instagram.com	FALSE	/	TRUE	1486978374	sessionid	IGSC468f4907a6ff4ece83b39f46e91b737faabf48f5c835950103c1a3a609ece824%3AWPAPhC1LO3rcK3PaDw9ErEm7IHheDmb9%3A%7B%22asns%22%3A%7B%22110.170.201.185%22%3A7470%2C%22time%22%3A1479202374%7D%7D
+api.instagram.com	FALSE	/	FALSE	1479205993	s_network	
+api.instagram.com	FALSE	/	TRUE	1510652005	csrftoken	32lXdEcMzfi931sqt4eFT5cFq0A0Ixyt
+www.instagram.com	FALSE	/	TRUE	1497526954	sessionid	IGSC2fa151ab99826ad3b87dba58a4a02524333cd13dd7b2a7c3f47d0325abac2ef3%3AoH3apDDeghn0LvDLoFFAVWz7VmX5s1mT%3A%7B%22last_refreshed%22%3A1489750952.2794055939%2C%22_auth_user_id%22%3A11116725%2C%22asns%22%3A%7B%22time%22%3A1489750952%7D%2C%22_platform%22%3A4%2C%22_auth_user_backend%22%3A%22accounts.backends.CaseInsensitiveModelBackend%22%2C%22_auth_user_hash%22%3A%22%22%2C%22_token_ver%22%3A2%2C%22_token%22%3A%2211116725%3AYITXBjAed7ph7r9v319ynI45C9sft9f2%3A78b988610e79f6e18e9be167fb296b9dd04f82c55c1250e246dabfc9520e73e9%22%7D
+www.instagram.com	FALSE	/	FALSE	0	ig_vw	1313
+www.instagram.com	FALSE	/	FALSE	0	ig_pr	1
+www.instagram.com	FALSE	/	FALSE	1489756483	s_network	""
+www.instagram.com	FALSE	/	FALSE	1497528884	ds_user_id	11116725
+www.instagram.com	FALSE	/	TRUE	1521202484	csrftoken	QSdP5ZOqmkJpZrpPR0VH0JUVNCBhhhhr
+outofthesandbox.com	FALSE	/	FALSE	1479979257	_landing_page	%2Fpages%2Finstagram-access-token
