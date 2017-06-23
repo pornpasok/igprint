@@ -144,9 +144,14 @@ foreach(json_decode($sharedData)->entry_data->TagPage as $item){
 
 			//print_r($user_sharedData);
 			$user_data = json_decode($user_sharedData,1);
+			/*
 			$username = $user_data['entry_data']['PostPage'][0]['media']['owner']['username'];
 			$profile_pic_url = $user_data['entry_data']['PostPage'][0]['media']['owner']['profile_pic_url'];
 			$location_name = $user_data['entry_data']['PostPage'][0]['media']['location']['name'];
+			*/
+			$username = $user_data['entry_data']['PostPage'][0]['graphql']['shortcode_media']['owner']['username'];
+			$profile_pic_url = $user_data['entry_data']['PostPage'][0]['graphql']['shortcode_media']['owner']['profile_pic_url'];
+			$location_name = $user_data['entry_data']['PostPage'][0]['graphql']['shortcode_media']['location']['name'];
 
 			echo "$username : $location : $profile_pic_url \n";
 			//exit;
