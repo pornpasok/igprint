@@ -82,83 +82,95 @@ $i = count(glob($dir_tag."/"."*.jpg"));
 
 $j=0;
 
+$count_i = 0; // Total Images
+
+
 while (1) {
 
-$sharedData = trim(shell_exec("curl --cookie cookies_ig.txt -l https://www.instagram.com/explore/tags/".$tag."/ |awk -F'window._sharedData = ' '{print $2}' | awk -F';</script>' '{print $1}'"));
+	$sharedData = trim(shell_exec("curl --cookie cookies_ig.txt -l https://www.instagram.com/explore/tags/".$tag."/ |awk -F'window._sharedData = ' '{print $2}' | awk -F';</script>' '{print $1}'"));
 
-
-//print_r($sharedData);
-//exit;
-
-//$data = json_decode($sharedData);
-
-//print_r($data);
-
-//print_r($sharedData);
-//exit;
-
-foreach(json_decode($sharedData)->entry_data->TagPage as $item){
-	//print_r($item);
+	//print_r($sharedData);
 	//exit;
-	foreach ($item->tag->media->nodes as $key_nodes => $nodes) {
-		$src = $nodes->thumbnail_src;
-		$src = explode("?", $src);
-		//print_r($src);
+
+	//$data = json_decode($sharedData);
+
+	//print_r($data);
+
+	//print_r($sharedData);
+	//exit;
+
+	// 2018-02-04
+	// entry_data->TagPage->0->graphql->hashtag->edge_hashtag_to_media
+	// count = total images
+	// edges = images data [0..xxx]
+	// node 
+	// thumbnail_src = URL images [0..xxx] 0 = lastest
+
+	$sharedData = json_decode($sharedData,1);
+	//print_r($sharedData);
+
+	$count = $sharedData['entry_data']['TagPage'][0]['graphql']['hashtag']['edge_hashtag_to_media']['count'];
+
+	echo "Count: $count\n";
+
+	# Get and Gen Images
+	for ($count_i=0; $count_i<$count; $count_i++) {
+
+		// Images
+		$thumbnail_src = $sharedData['entry_data']['TagPage'][0]['graphql']['hashtag']['edge_hashtag_to_media']['edges'][$count_i]['node']['thumbnail_src'];
+		$src = explode("?", $thumbnail_src);
 		$src = $src[0];
 
-		$code = $nodes->code;
-		$created_time = $nodes->date;
-		$created_time = date('d.m.Y H:i', $created_time);
-		$caption_text = $nodes->caption;
-		$user_id = $nodes->owner->id;
+		// Taken Time
+		$taken_at_timestamp = $sharedData['entry_data']['TagPage'][0]['graphql']['hashtag']['edge_hashtag_to_media']['edges'][$count_i]['node']['taken_at_timestamp'];
+		$created_time = date('d.m.Y H:i', $taken_at_timestamp);
 
-		//echo "$code : $created_time : $caption_text : $user_id\n";
+		// Caption Text
+		$text = $sharedData['entry_data']['TagPage'][0]['graphql']['hashtag']['edge_hashtag_to_media']['edges'][$count_i]['node']['edge_media_to_caption']['edges'][0]['node']['text'];
+		$caption_text = $text;
 
+		$code = $sharedData['entry_data']['TagPage'][0]['graphql']['hashtag']['edge_hashtag_to_media']['edges'][$count_i]['node']['shortcode'];
 
-		
+		// UserID
+		$user_id = $sharedData['entry_data']['TagPage'][0]['graphql']['hashtag']['edge_hashtag_to_media']['edges'][$count_i]['node']['owner']['id'];
+
+	
 		# Create Original IG Images
 		$check_img = $dir_img_cover."/".md5($src).".jpg"; // Check 
 		//echo "$i : $src\n";
-
 
 		if (!file_exists($check_img)) {  // Not Found IG Images
 			$i++;
 			$j++;
 
 			echo "$i : $src\n";
-		
+										
 			# Name from $i
 			$org_ig_name = $dir_tag."/".$i.".jpg";
-		
 			$org_ig_url = imagecreatefromstring(file_get_contents($src));
 			imagejpeg($org_ig_url, $org_ig_name);
 			echo "Not Found: $org_ig_name Create Complete \n";
-			
-			
+											
 			# Create Profile User
 			$org_user_name = $dir_tag_user."/".$user_id.".jpg";
+			
+			if ($code !="") {
+				// Get User Data
+				# User Profile
+				$user_sharedData = trim(shell_exec("curl -l https://www.instagram.com/p/".$code."/ |awk -F'window._sharedData = ' '{print $2}' | awk -F';</script>' '{print $1}'"));
 
+				//print_r($user_sharedData);
+				$user_data = json_decode($user_sharedData,1);
 
-			# User Profile
-			$user_sharedData = trim(shell_exec("curl -l https://www.instagram.com/p/".$code."/ |awk -F'window._sharedData = ' '{print $2}' | awk -F';</script>' '{print $1}'"));
+				$username = $user_data['entry_data']['PostPage'][0]['graphql']['shortcode_media']['owner']['username'];
+				$profile_pic_url = $user_data['entry_data']['PostPage'][0]['graphql']['shortcode_media']['owner']['profile_pic_url'];
+				$location_name = $user_data['entry_data']['PostPage'][0]['graphql']['shortcode_media']['location']['name'];
+				echo "[$count_i]: $thumbnail_src : $text : $taken_at_timestamp : $code\n";
+				echo "$username : $location_name : $profile_pic_url \n";
 
-			//print_r($user_sharedData);
-			$user_data = json_decode($user_sharedData,1);
-			/*
-			$username = $user_data['entry_data']['PostPage'][0]['media']['owner']['username'];
-			$profile_pic_url = $user_data['entry_data']['PostPage'][0]['media']['owner']['profile_pic_url'];
-			$location_name = $user_data['entry_data']['PostPage'][0]['media']['location']['name'];
-			*/
-			$username = $user_data['entry_data']['PostPage'][0]['graphql']['shortcode_media']['owner']['username'];
-			$profile_pic_url = $user_data['entry_data']['PostPage'][0]['graphql']['shortcode_media']['owner']['profile_pic_url'];
-			$location_name = $user_data['entry_data']['PostPage'][0]['graphql']['shortcode_media']['location']['name'];
-
-			echo "$username : $location : $profile_pic_url \n";
-			//exit;
-	
+			}
+									
 			if (!file_exists($org_user_name)) {  // Not Found IG Images
-
-
 				$org_user_url = imagecreatefromstring(file_get_contents($profile_pic_url));
 				imagejpeg($org_user_url, $org_user_name);
 				echo "Not Found: $org_user_name Create Complete \n";
@@ -166,120 +178,105 @@ foreach(json_decode($sharedData)->entry_data->TagPage as $item){
 			else { // Found IG Images
 				echo "Found: $org_user_name \n";
 			}
-			
-		
-  			
+											
 			### Create Cover Images same IG ###
 			# Create Instagram Frame
-	
 			$frame=imagecreatefromstring(file_get_contents($frame_img));                  // Clone new frame
-	
 			# Insert Instagram Images
 			$realImageArray = imagecreatefromstring(file_get_contents($org_ig_name));
-	
-			imagecopymerge($frame, $realImageArray, 80, 180, 0, 0, 640, 640, 100); //Params =(background img, img upper, BG x, BG y, Upper X-Y-W-H, alpha)
-	
-
 			
+			imagecopymerge($frame, $realImageArray, 80, 180, 0, 0, 640, 640, 100); //Params =(background img, img upper, BG x, BG y, Upper X-Y-W-H, alpha)
+									
 			# Insert Avatar
 			$avatar_img = imagecreatefromstring(file_get_contents($org_user_name)); 
 			$resize_image = imagecreatetruecolor(60, 60);
 			imagecopyresampled($resize_image, $avatar_img, 0, 0, 0, 0, 60, 60, 150, 150);
-			$avatar_img = $resize_image;
-				 
+			$avatar_img = $resize_image;								 
 			imagecopymerge($frame, $avatar_img, 80, 90, 0, 0, 60, 60, 100);
-	
-	
-	
+									
 			# Insert Username
-    		$username_img = imagecreatetruecolor(390, 30);
+			$username_img = imagecreatetruecolor(390, 30);
 			# Color
 			$white = imagecolorallocate($username_img, 255, 255, 255);
 			$pink = imagecolorallocate($username_img, 202, 100, 100);
 			//$pink = imagecolorallocate($username_img, 255, 255, 255);
-    		$grey = imagecolorallocate($username_img, 128, 128, 128);
-    		$black = imagecolorallocate($username_img, 0, 0, 0);
-    		$blue = imagecolorallocate($username_img, 54, 35, 147);
+			$grey = imagecolorallocate($username_img, 128, 128, 128);
+			$black = imagecolorallocate($username_img, 0, 0, 0);
+			$blue = imagecolorallocate($username_img, 54, 35, 147);
 
-    		//imagefilledrectangle($username_img, 0, 0, 390, 30, $white);
+			//imagefilledrectangle($username_img, 0, 0, 390, 30, $white);
 			imagefilledrectangle($username_img, 0, 0, 390, 30, $white);
-    		//$text = $username." ".$full_name;
+			//$text = $username." ".$full_name;
 			$text = $username;
-    		//imagettftext($username_img, 14, 0, 11, 21, $white, $font, $text); // Add some shadow to the text. IMG - SIZE -ANGLE - X - Y - COLOR- FONT - CONTENT
-    		imagettftext($username_img, 22, 0, 11, 21, $black, $font, $text); // Add the text
-    		imagecopymerge($frame, $username_img, 150, 90, 0, 0, 390, 30, 100);
-	
+			//imagettftext($username_img, 14, 0, 11, 21, $white, $font, $text); // Add some shadow to the text. IMG - SIZE -ANGLE - X - Y - COLOR- FONT - CONTENT
+			imagettftext($username_img, 22, 0, 11, 21, $black, $font, $text); // Add the text
+			imagecopymerge($frame, $username_img, 150, 90, 0, 0, 390, 30, 100);
+									
 			# Insert Location
-    		$location_img=imagecreatetruecolor(580, 30);
-    		//imagefilledrectangle($location_img, 0, 0, 580, 30, $white);
+			$location_img=imagecreatetruecolor(580, 30);
+			//imagefilledrectangle($location_img, 0, 0, 580, 30, $white);
 			imagefilledrectangle($location_img, 0, 0, 580, 30, $white);
-    		$location=$location_name;
-    		//imagettftext($location_img, 22, 0, 11, 21, $blue, $font, $location); // Add the text
-    		imagettftext($location_img, 20, 0, 11, 23, $blue, $font, $location); // Add the text
-    		imagecopymerge($frame, $location_img, 150, 122, 0, 0, 580, 30, 100);
-	
-						
+			$location=$location_name;
+			//imagettftext($location_img, 22, 0, 11, 21, $blue, $font, $location); // Add the text
+			imagettftext($location_img, 20, 0, 11, 23, $blue, $font, $location); // Add the text
+			imagecopymerge($frame, $location_img, 150, 122, 0, 0, 580, 30, 100);
+									
 			# Insert Date Time
-    		$time_img=imagecreatetruecolor(300, 30);
-    		//imagefilledrectangle($time_img, 0, 0, 300, 30, $white);
+			$time_img=imagecreatetruecolor(300, 30);
+			//imagefilledrectangle($time_img, 0, 0, 300, 30, $white);
 			imagefilledrectangle($time_img, 0, 0, 300, 30, $white);
-    		$time=$created_time;
-    		imagettftext($time_img, 22, 0, 11, 21, $grey, $font, $time); // Add the text
-    		imagecopymerge($frame, $time_img, 520, 90, 0, 0, 300, 30, 100);
+			$time=$created_time;
+			imagettftext($time_img, 22, 0, 11, 21, $grey, $font, $time); // Add the text
+			imagecopymerge($frame, $time_img, 520, 90, 0, 0, 300, 30, 100);
 
 			# Insert Text
-		
-    		// Match Emoticons
-    		$regexEmoticons = '/[\x{1F600}-\x{1F64F}]/u';
-    		$clean_text = preg_replace($regexEmoticons, '', $caption_text);
+			// Match Emoticons
+			$regexEmoticons = '/[\x{1F600}-\x{1F64F}]/u';
+			$clean_text = preg_replace($regexEmoticons, '', $caption_text);
 
-    		// Match Miscellaneous Symbols and Pictographs
-    		$regexSymbols = '/[\x{1F300}-\x{1F5FF}]/u';
-    		$clean_text = preg_replace($regexSymbols, '', $clean_text);
+			// Match Miscellaneous Symbols and Pictographs
+			$regexSymbols = '/[\x{1F300}-\x{1F5FF}]/u';
+			$clean_text = preg_replace($regexSymbols, '', $clean_text);
 
-    		// Match Transport And Map Symbols
-    		$regexTransport = '/[\x{1F680}-\x{1F6FF}]/u';
-    		$clean_text = preg_replace($regexTransport, '', $clean_text);
+			// Match Transport And Map Symbols
+			$regexTransport = '/[\x{1F680}-\x{1F6FF}]/u';
+			$clean_text = preg_replace($regexTransport, '', $clean_text);
 
-    		// Match Miscellaneous Symbols
-    		$regexMisc = '/[\x{2600}-\x{26FF}]/u';
-    		$clean_text = preg_replace($regexMisc, '', $clean_text);
+			// Match Miscellaneous Symbols
+			$regexMisc = '/[\x{2600}-\x{26FF}]/u';
+			$clean_text = preg_replace($regexMisc, '', $clean_text);
 
-    		// Match Dingbats
-    		$regexDingbats = '/[\x{2700}-\x{27BF}]/u';
-    		$clean_text = preg_replace($regexDingbats, '', $clean_text);
-		
+			// Match Dingbats
+			$regexDingbats = '/[\x{2700}-\x{27BF}]/u';
+			$clean_text = preg_replace($regexDingbats, '', $clean_text);
+										
 			// Clean Text
 			$caption_text = $clean_text;
 
-
-    		$text_img=imagecreatetruecolor(640, 30);
-    		//imagefilledrectangle($text_img, 0, 0, 612, 30, $white);
+			$text_img=imagecreatetruecolor(640, 30);
+			//imagefilledrectangle($text_img, 0, 0, 612, 30, $white);
 			imagefilledrectangle($text_img, 0, 0, 640, 35, $white);
-    		imagettftext($text_img, 20, 0, 11, 23, $pink, $font, $caption_text); // Add the text
-    		imagecopymerge($frame, $text_img, 80, 850, 0, 0, 640, 30, 100);
-	
-
+			imagettftext($text_img, 20, 0, 11, 23, $pink, $font, $caption_text); // Add the text
+			imagecopymerge($frame, $text_img, 80, 850, 0, 0, 640, 30, 100);
+			
 			# Insert Footer
 			$footer_pictures=imagecreatefromjpeg($footer_img);
-    		imagecopymerge($frame, $footer_pictures, 0, 880, 0, 0, 800, 181, 100);
+			imagecopymerge($frame, $footer_pictures, 0, 880, 0, 0, 800, 181, 100);
 
-		
 			# Create Instagram Images
 			//imagejpeg($org_ig_url, $org_ig_name);
 			imagejpeg($frame, $dir_img_cover."/".md5($src).".jpg");
 			//imagejpeg($org_ig_url, $dir_img_cover."/".md5($src).".jpg");
 			//echo "<img src=".$dir_img_cover."/".md5($src).".jpg".">\n";
-			$img_print = "/Users/ton/Sites/newigprint/".$dir_img_cover."/".md5($src).".jpg";
-		
+			$img_print = "/Users/ton/Sites/igprint/newigprint/".$dir_img_cover."/".md5($src).".jpg";
+										
 			# Print
 			echo "Print: $img_print \n";
 
 			//exec("lp -d Canon_CP910_2 $img_print");
 			//exec("lp -d Canon_CP910 $img_print");
-			
 			/*
-			
+											
 			if(($i%2)==1) {
 				exec("lp -d Canon_CP910 $img_print");
 			}
@@ -287,32 +284,17 @@ foreach(json_decode($sharedData)->entry_data->TagPage as $item){
 				exec("lp -d Canon_CP910_2 $img_print");
 			}
 			*/
-			
-			
-			
-			
-			
-			
-			
-			
-			
-		
-		
-		
-			//sleep(60);
-			//echo "$i ";
-		
-	
 		}
 		else { // Found IG Images
 			echo "Found: $check_img \n";
 		}
-
+		// End if
 
 	}
+	// End for
 	//print_r($src);
 	
-}
+
 
 # Sleep API
 echo date('h:i:s') . "\n";
@@ -320,6 +302,7 @@ sleep(60);
 
 
 }
+// End while
 
 echo "<br> Complete: $j Images \n";
 echo "Total: $i Images \n";
